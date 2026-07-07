@@ -122,6 +122,41 @@ def encourage_lines(name):
     ]
 
 
+def wrong_callouts(name):
+    who = kid_label(name)
+    return [
+        f"Nope, {who}! That wasn't it.",
+        f"Wrong answer, {who}! The computer remembers.",
+        f"Not today, {who}! Try again on the next one.",
+        f"{who}, that pick didn't work.",
+        f"Missed it, {who}! Multiplication is undefeated.",
+        f"Oof, {who} — wrong button.",
+        f"{who}, the math lock is still locked.",
+        f"So close, {who}... except not close at all.",
+        f"{who}, your computer is waiting for correct answers.",
+        f"Negative, {who}! Wrong.",
+        f"{who}, you can't guess your way to freedom.",
+        f"That answer said no, {who}.",
+        f"{who}, the times tables want a rematch.",
+        f"Wrong, {who}! But the next question is coming.",
+        f"{who}, memorizing beats guessing every time.",
+    ]
+
+
+def wrong_followups(name):
+    who = kid_label(name)
+    return [
+        f"Keep thinking, {who} — no answer shown on purpose.",
+        f"Sorry {who}, wrong answers don't count toward escape.",
+        f"{who}, use the strategy hint and crush the next one.",
+        f"Don't worry {who} — the lock isn't going anywhere.",
+        f"{who}, every miss is more multiplication practice.",
+        f"Hang in there, {who}. Ten correct answers is the deal.",
+        f"{who}, your brain is building muscle right now.",
+        f"Next question soon, {who}. Stay sharp.",
+    ]
+
+
 def lock_taunts(name):
     who = kid_label(name)
     return [
@@ -472,6 +507,7 @@ def main():
     stars_earned = 0
     particles = []
     wrong_pick = None
+    wrong_subtext = ""
 
     def grace_remaining():
         return max(0, int(grace_deadline - time.time()))
@@ -665,7 +701,7 @@ def main():
         new_question()
 
     def submit_answer(guess):
-        nonlocal show_feedback, feedback, feedback_good, feedback_until
+        nonlocal show_feedback, feedback, feedback_good, feedback_until, wrong_subtext
         nonlocal score, streak, best_streak, questions_done, session_correct, stars_earned
         nonlocal mastered, misses, correct_counts, state, practice_index, wrong_pick, escape_unlocked
         if show_feedback:
@@ -685,6 +721,7 @@ def main():
             best_streak = max(best_streak, streak)
             session_correct += 1
             feedback = random.choice(praise_lines(kid_name))
+            wrong_subtext = ""
             was_mastered = current_display in mastered
             if record_correct(mastered, correct_counts, current_display):
                 if not was_mastered:
@@ -706,8 +743,10 @@ def main():
             streak = 0
             wrong_pick = guess
             misses[current_display] = misses.get(current_display, 0) + 1
-            hint = HINTS.get(current_display, "Break the problem into smaller pieces.")
-            feedback = f"{random.choice(encourage_lines(kid_name))} {hint}"
+            callout = random.choice(wrong_callouts(kid_name))
+            encourage = random.choice(encourage_lines(kid_name))
+            feedback = f"{callout} {encourage}"
+            wrong_subtext = random.choice(wrong_followups(kid_name))
 
         save_progress(mastered, misses, correct_counts, kid_name)
 
@@ -1008,17 +1047,24 @@ def main():
 
             if show_feedback:
                 fb_color = GOOD if feedback_good else BAD
-                draw_rounded_rect(screen, pygame.Rect(110, 310, WIDTH - 220, 36), (20, 30, 28) if feedback_good else (35, 20, 24), 8, 1, fb_color)
-                draw_text(screen, feedback[:85], font, fb_color, 120, 322)
-                draw_text(
+                fb_h = 52 if not feedback_good else 36
+                draw_rounded_rect(
                     screen,
-                    "Next question coming up..." if feedback_good else "No answer shown — keep thinking!",
-                    font,
-                    TEXT_MUTED,
-                    WIDTH // 2,
-                    348,
-                    center=True,
+                    pygame.Rect(110, 310, WIDTH - 220, fb_h),
+                    (20, 30, 28) if feedback_good else (35, 20, 24),
+                    8,
+                    1,
+                    fb_color,
                 )
+                if feedback_good:
+                    draw_text(screen, feedback[:85], font, fb_color, 120, 322)
+                    subtext = "Next question coming up..."
+                else:
+                    draw_text(screen, feedback[:90], font, fb_color, 120, 320)
+                    if len(feedback) > 90:
+                        draw_text(screen, feedback[90:180], font, fb_color, 120, 338)
+                    subtext = wrong_subtext
+                draw_text(screen, subtext, font, TEXT_MUTED if feedback_good else BAD, WIDTH // 2, 368, center=True)
 
             label_y = 332 if not show_feedback else 358
             draw_text(screen, "Pick the answer:", font_med, TEXT, WIDTH // 2, label_y, center=True)
