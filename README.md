@@ -2,7 +2,33 @@
 
 A way to force your kids to memorize multiplication facts — totally not made by kids 😉😉
 
-A Linux pygame app that quietly runs at login, waits 10 minutes, then fullscreen-locks the computer until your kid answers 10 multiplication problems correctly. Built for real whiteboard homework facts — with parent override, cheat-proofing, and progress tracking.
+## What This SUPER COOL PROGRAM Is Supposed To Do :DDDDDD
+
+Imagine your kid logs into their computer, vibes for **10 glorious minutes**, thinks they're free… and then **BAM** — fullscreen math prison.
+
+This **EXTREMELY LEGIT** and **DEFINITELY NOT EVIL** educational software:
+
+1. **Sneaks onto the computer at startup** like a multiplication ninja 🥷
+2. **Hides in the shadows** for 10 minutes so your kid lowers their guard
+3. **ERUPTS onto the screen in fullscreen** and says their name like a game show host who hates fun
+4. **Refuses to let them leave** until they get **10 multiplication questions RIGHT** (guessing all 4 buttons doesn't work — we thought of that)
+5. **Calls them out by name when they're wrong** — *"Nope, Graham! The computer remembers."*
+6. **Does NOT give away answers** because that would defeat the whole beautiful suffering
+7. **Lets parents cheat** with a secret PIN panel because adults deserve shortcuts
+
+**The goal?** Your kid memorizes times tables so they can use their computer faster.
+
+**The reality?** Your kid stares at `48 × 5` like it's written in ancient alien script while you sip your drink knowing you built a startup app that launches at login.
+
+**Is it fair?** Debatable.
+
+**Is it effective?** Terrifyingly yes.
+
+**Was it made by kids?** Totally not. 😉😉
+
+---
+
+A Linux pygame app built for real whiteboard homework facts — with parent override, cheat-proofing, personalized name taunts, and progress tracking.
 
 ## Features
 
