@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain } = require("electron");
+const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -11,6 +11,10 @@ let mainWindow = null;
 let locked = false;
 let escaped = false;
 let graceTimer = null;
+
+app.commandLine.appendSwitch("disable-gpu");
+app.commandLine.appendSwitch("disable-software-rasterizer");
+app.commandLine.appendSwitch("disable-gpu-compositing");
 
 function loadProgressFile() {
   try {
@@ -30,19 +34,26 @@ function saveProgressFile(data) {
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
 }
 
-function createWindow() {
+function createWindow(openPin = false) {
   if (graceTimer) {
     clearTimeout(graceTimer);
     graceTimer = null;
   }
   if (mainWindow) {
     mainWindow.focus();
+    if (openPin) mainWindow.webContents.send("open-parent-pin");
     return;
   }
 
+  const { width, height } = screen.getPrimaryDisplay().bounds;
+
   mainWindow = new BrowserWindow({
-    width: 960,
-    height: 700,
+    x: 0,
+    y: 0,
+    width,
+    height,
+    show: false,
+    frame: false,
     fullscreen: true,
     kiosk: true,
     autoHideMenuBar: true,
@@ -54,12 +65,22 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, "..", "app", "index.html"));
+  mainWindow.setMenu(null);
   locked = true;
   escaped = false;
 
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.setFullScreen(true);
+    mainWindow.setKiosk(true);
+    mainWindow.show();
+    mainWindow.focus();
+  });
+
+  mainWindow.loadFile(path.join(__dirname, "..", "app", "index.html"));
+
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send("lock-state", { locked: true, escaped: false });
+    if (openPin) mainWindow.webContents.send("open-parent-pin");
   });
 
   mainWindow.on("close", (event) => {
@@ -72,22 +93,19 @@ function createWindow() {
 
 function startGraceTimer() {
   if (graceTimer) clearTimeout(graceTimer);
-  graceTimer = setTimeout(createWindow, GRACE_MS);
+  graceTimer = setTimeout(() => createWindow(false), GRACE_MS);
 }
 
 app.whenReady().then(() => {
-  startGraceTimer();
+  // Skip grace if launched with --now for testing
+  if (process.argv.includes("--now")) {
+    createWindow(false);
+  } else {
+    startGraceTimer();
+  }
 
   globalShortcut.register("Control+Shift+P", () => {
-    if (!mainWindow) {
-      createWindow();
-      mainWindow.webContents.once("did-finish-load", () => {
-        mainWindow.webContents.send("open-parent-pin");
-      });
-    } else {
-      mainWindow.webContents.send("open-parent-pin");
-      mainWindow.focus();
-    }
+    createWindow(true);
   });
 
   ipcMain.handle("load-progress", () => loadProgressFile());
@@ -107,11 +125,14 @@ app.whenReady().then(() => {
     app.quit();
   });
   ipcMain.handle("parent-back-to-lock", () => {
-    if (!mainWindow) createWindow();
+    if (!mainWindow) createWindow(false);
     else mainWindow.focus();
     locked = true;
     escaped = false;
-    if (mainWindow) mainWindow.setKiosk(true);
+    if (mainWindow) {
+      mainWindow.setKiosk(true);
+      mainWindow.setFullScreen(true);
+    }
     return true;
   });
   ipcMain.handle("parent-snooze", () => {

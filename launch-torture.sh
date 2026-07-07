@@ -9,4 +9,5 @@ if [[ ! -d node_modules/electron ]]; then
   npm install
 fi
 
-exec npx electron . --no-sandbox --disable-gpu "$@"
+# Add --now to skip the 10-minute grace period (for testing)
+exec npx electron . --no-sandbox --disable-gpu --disable-gpu-compositing "$@"
