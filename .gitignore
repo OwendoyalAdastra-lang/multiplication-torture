@@ -1,0 +1,10 @@
+dist/
+build/
+*.spec
+__pycache__/
+*.pyc
+.graham_multiplication/
+graham_math_progress.json
+game-env/
+venv/
+.venv/

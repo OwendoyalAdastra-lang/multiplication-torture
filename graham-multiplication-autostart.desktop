@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Graham's Math Lock
+Comment=Starts Graham's multiplication lock screen at login
+Exec=/bin/bash -c 'sleep 3 && exec /home/owendoyaladastra/dist/GrahamsMultiplicationBlast'
+Icon=/home/owendoyaladastra/graham_math_icon.png
+Terminal=false
+Categories=Education;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=0
+StartupNotify=false
