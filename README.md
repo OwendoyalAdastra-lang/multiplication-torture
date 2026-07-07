@@ -29,6 +29,13 @@ python3 build_graham_math_app.py
 ./install_graham_startup.sh
 ```
 
+## Set your kid's name
+
+1. Press `Ctrl+Shift+P` and enter your parent PIN
+2. Click **Set Kid's Name** — the game will use it in every message
+
+Saved in `~/.graham_multiplication/progress.json` as `kid_name`.
+
 ## Parent PIN
 
 Edit `PARENT_PIN` near the top of `graham_multiplication_game.py`, then rebuild:

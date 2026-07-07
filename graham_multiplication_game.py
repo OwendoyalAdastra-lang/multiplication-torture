@@ -93,21 +93,43 @@ GRACE_SECONDS = 10 * 60  # free computer time before math lock appears
 # CHANGE THIS to your secret parent PIN (numbers only).
 PARENT_PIN = "2847"
 
-PRAISE = [
-    "BOOM! You crushed it!",
-    "Yes Graham! That's the one!",
-    "Math wizard alert!",
-    "Nailed it — keep going!",
-    "Your brain is on fire today!",
-    "Perfect! Owen would be jealous.",
-]
+def kid_label(name):
+    cleaned = (name or "").strip()
+    return cleaned if cleaned else "buddy"
 
-ENCOURAGE = [
-    "Almost! Try breaking it into smaller steps.",
-    "Not quite — you've got the next one.",
-    "Good try! Think: repeated addition.",
-    "Close! Take a breath and go again.",
-]
+
+def praise_lines(name):
+    who = kid_label(name)
+    return [
+        "BOOM! You crushed it!",
+        f"Yes {who}! That's the one!",
+        f"Math wizard alert, {who}!",
+        f"Nailed it, {who} — keep going!",
+        f"Your brain is on fire today, {who}!",
+        f"Perfect, {who}! The computer is watching.",
+        f"Nice one, {who}! Multiplication doesn't lie.",
+    ]
+
+
+def encourage_lines(name):
+    who = kid_label(name)
+    return [
+        f"Almost, {who}! Break it into smaller steps.",
+        f"Not quite, {who} — you've got the next one.",
+        f"Good try, {who}! Think: repeated addition.",
+        f"Close, {who}! Take a breath and go again.",
+        f"Keep going, {who}. No escape without math.",
+    ]
+
+
+def lock_taunts(name):
+    who = kid_label(name)
+    return [
+        f"Surprise, {who}! Math time!",
+        f"{who}, your computer needs 10 multiplication facts first!",
+        f"Hey {who} — multiplication before freedom!",
+        f"Time's up, {who}! Let's see those times tables!",
+    ]
 
 # Strategy hints only — never include the final numeric answer.
 HINTS = {
@@ -137,14 +159,16 @@ def load_progress():
     mastered = set(data.get("mastered", []))
     misses = data.get("misses", {})
     correct_counts = data.get("correct_counts", {})
-    return mastered, {k: int(v) for k, v in misses.items()}, {k: int(v) for k, v in correct_counts.items()}
+    kid_name = str(data.get("kid_name", "")).strip()
+    return mastered, {k: int(v) for k, v in misses.items()}, {k: int(v) for k, v in correct_counts.items()}, kid_name
 
 
-def save_progress(mastered, misses, correct_counts):
+def save_progress(mastered, misses, correct_counts, kid_name):
     os.makedirs(PROGRESS_DIR, exist_ok=True)
     with open(PROGRESS_FILE, "w") as f:
         json.dump(
             {
+                "kid_name": kid_name.strip(),
                 "mastered": sorted(mastered),
                 "misses": misses,
                 "correct_counts": correct_counts,
@@ -357,16 +381,26 @@ def build_pin_keypad():
     return buttons
 
 
-def build_parent_buttons():
-    x, w, h, gap = 150, 660, 48, 10
-    y0 = 200
+def build_parent_buttons(kid_name=""):
+    who = kid_label(kid_name)
+    stats_label = f"View {who}'s Stats" if kid_name else "View Stats"
+    x, w, h, gap = 150, 660, 44, 8
+    y0 = 188
     return [
-        Button((x, y0 + 0 * (h + gap), w, h), "View Graham's Stats", "parent_stats", ADMIN_ACCENT),
-        Button((x, y0 + 1 * (h + gap), w, h), "Set Stats", "parent_set_stats", ACCENT),
-        Button((x, y0 + 2 * (h + gap), w, h), "Snooze Math (10 More Minutes)", "parent_snooze", ACCENT2),
-        Button((x, y0 + 3 * (h + gap), w, h), "Force Math Lock Now", "parent_force_lock", STREAK),
-        Button((x, y0 + 4 * (h + gap), w, h), "Close Math", "parent_close_math", danger=True),
-        Button((x, y0 + 5 * (h + gap), w, h), "Back to Math Lock", "parent_close", TEXT_MUTED),
+        Button((x, y0 + 0 * (h + gap), w, h), "Set Kid's Name", "parent_set_name", GOOD),
+        Button((x, y0 + 1 * (h + gap), w, h), stats_label, "parent_stats", ADMIN_ACCENT),
+        Button((x, y0 + 2 * (h + gap), w, h), "Set Stats", "parent_set_stats", ACCENT),
+        Button((x, y0 + 3 * (h + gap), w, h), "Snooze Math (10 More Minutes)", "parent_snooze", ACCENT2),
+        Button((x, y0 + 4 * (h + gap), w, h), "Force Math Lock Now", "parent_force_lock", STREAK),
+        Button((x, y0 + 5 * (h + gap), w, h), "Close Math", "parent_close_math", danger=True),
+        Button((x, y0 + 6 * (h + gap), w, h), "Back to Math Lock", "parent_close", TEXT_MUTED),
+    ]
+
+
+def build_name_buttons():
+    return [
+        Button((330, 360, 300, 52), "Save Name", "name_save", GOOD),
+        Button((330, 422, 300, 52), "Back to Parent Panel", "name_back", ADMIN_ACCENT),
     ]
 
 
@@ -385,7 +419,7 @@ def main():
     pygame.init()
     pygame.mixer.init(frequency=SAMPLE_RATE, size=-16, channels=1, buffer=512)
     screen = pygame.display.set_mode((1, 1))
-    pygame.display.set_caption("Graham's Math Lock")
+    pygame.display.set_caption("Math Lock")
     pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
 
@@ -410,11 +444,17 @@ def main():
     parent_view = "main"
     return_state = "grace"
     pin_keypad = build_pin_keypad()
-    parent_buttons = build_parent_buttons()
     set_stats_buttons = build_set_stats_buttons()
     parent_notice = ""
     parent_notice_until = 0.0
-    mastered, misses, correct_counts = load_progress()
+    mastered, misses, correct_counts, kid_name = load_progress()
+    parent_buttons = build_parent_buttons(kid_name)
+    name_buttons = build_name_buttons()
+    name_input = kid_name
+    name_message = ""
+    name_message_until = 0.0
+    lock_taunt = ""
+    lock_taunt_until = 0.0
     score = 0
     streak = 0
     best_streak = 0
@@ -447,18 +487,34 @@ def main():
             lock_message = f"Math lock starts in {mins}:{secs:02d}. Finish your 10 free minutes first."
         else:
             remaining = max(0, ROUND_GOAL - questions_done)
-            lock_message = f"Locked! Get {remaining} more correct answer{'s' if remaining != 1 else ''} to escape."
+            who = kid_label(kid_name)
+            lock_message = f"Sorry {who}! Get {remaining} more correct answer{'s' if remaining != 1 else ''} to escape."
         lock_message_until = time.time() + 2.0
         play_sound("bad")
 
+    def refresh_parent_buttons():
+        nonlocal parent_buttons
+        parent_buttons = build_parent_buttons(kid_name)
+
+    def update_window_title():
+        who = kid_label(kid_name)
+        if math_lock_active:
+            pygame.display.set_caption(f"{who}'s Math Lock — answer 10 to escape")
+        else:
+            pygame.display.set_caption(f"{who}'s Math Lock")
+
+    update_window_title()
+
     def activate_math_lock():
-        nonlocal state, screen, math_lock_active, return_state
+        nonlocal state, screen, math_lock_active, return_state, lock_taunt, lock_taunt_until
         screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
-        pygame.display.set_caption("Graham's Math Lock — answer 10 to escape")
+        update_window_title()
         pygame.event.set_grab(True)
         pygame.mouse.set_visible(True)
         math_lock_active = True
         return_state = "play"
+        lock_taunt = random.choice(lock_taunts(kid_name))
+        lock_taunt_until = time.time() + 4.5
         start_round("practice")
 
     def open_pin_entry():
@@ -484,16 +540,22 @@ def main():
             pygame.mouse.set_visible(True)
 
     def submit_pin():
-        nonlocal state, pin_input, pin_message, pin_message_until, parent_view, screen
+        nonlocal state, pin_input, pin_message, pin_message_until, parent_view, screen, name_input
         if pin_input == PARENT_PIN:
             play_sound("good")
             screen = pygame.display.set_mode((WIDTH, HEIGHT))
             pygame.mouse.set_visible(True)
-            state = "parent_panel"
-            parent_view = "main"
             pin_input = ""
             pin_message = ""
             pygame.event.set_grab(False)
+            if kid_name:
+                state = "parent_panel"
+                parent_view = "main"
+            else:
+                state = "parent_set_name"
+                name_input = ""
+                name_message = "Enter your kid's name so the math lock can use it."
+                name_message_until = time.time() + 4.0
         else:
             play_sound("bad")
             pin_message = "Wrong PIN."
@@ -542,13 +604,13 @@ def main():
     def reset_all_stats():
         nonlocal mastered, misses, correct_counts
         mastered, misses, correct_counts = set(), {}, {}
-        save_progress(mastered, misses, correct_counts)
+        save_progress(mastered, misses, correct_counts, kid_name)
         show_parent_notice("All progress reset.")
 
     def clear_miss_counts():
         nonlocal misses
         misses = {}
-        save_progress(mastered, misses, correct_counts)
+        save_progress(mastered, misses, correct_counts, kid_name)
         show_parent_notice("Miss counts cleared.")
 
     def grant_free_escape():
@@ -558,7 +620,24 @@ def main():
         screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
         pygame.event.set_grab(False)
         pygame.mouse.set_visible(True)
-        show_parent_notice("Graham can close the math lock now.")
+        show_parent_notice(f"{kid_label(kid_name)} can close the math lock now.")
+
+    def save_kid_name():
+        nonlocal kid_name, name_input, state, name_message, name_message_until
+        cleaned = name_input.strip()
+        if not cleaned:
+            name_message = "Type a name first."
+            name_message_until = time.time() + 2.0
+            play_sound("bad")
+            return
+        kid_name = cleaned[:20]
+        name_input = kid_name
+        save_progress(mastered, misses, correct_counts, kid_name)
+        refresh_parent_buttons()
+        update_window_title()
+        show_parent_notice(f"Saved! The game will now call them {kid_name}.")
+        state = "parent_panel"
+        play_sound("good")
 
     def new_question():
         nonlocal current_display, current_answer, current_choices, choice_buttons, wrong_pick
@@ -605,7 +684,7 @@ def main():
             streak += 1
             best_streak = max(best_streak, streak)
             session_correct += 1
-            feedback = random.choice(PRAISE)
+            feedback = random.choice(praise_lines(kid_name))
             was_mastered = current_display in mastered
             if record_correct(mastered, correct_counts, current_display):
                 if not was_mastered:
@@ -628,9 +707,9 @@ def main():
             wrong_pick = guess
             misses[current_display] = misses.get(current_display, 0) + 1
             hint = HINTS.get(current_display, "Break the problem into smaller pieces.")
-            feedback = f"{random.choice(ENCOURAGE)} {hint}"
+            feedback = f"{random.choice(encourage_lines(kid_name))} {hint}"
 
-        save_progress(mastered, misses, correct_counts)
+        save_progress(mastered, misses, correct_counts, kid_name)
 
         if correct and questions_done >= ROUND_GOAL:
             play_sound("win")
@@ -662,12 +741,15 @@ def main():
                 ):
                     open_pin_entry()
                 elif event.key == pygame.K_ESCAPE:
-                    if state in ("pin_entry", "parent_stats", "parent_set_stats"):
+                    if state in ("pin_entry", "parent_stats", "parent_set_stats", "parent_set_name"):
                         if state == "parent_stats":
                             state = "parent_panel"
                             parent_view = "main"
                         elif state == "parent_set_stats":
                             state = "parent_panel"
+                        elif state == "parent_set_name":
+                            state = "parent_panel"
+                            name_input = kid_name
                         else:
                             close_pin_entry()
                     elif state == "parent_panel":
@@ -686,6 +768,14 @@ def main():
                         pin_input = pin_input[:-1]
                     elif event.unicode.isdigit() and len(pin_input) < len(PARENT_PIN):
                         pin_input += event.unicode
+                elif state == "parent_set_name":
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        save_kid_name()
+                    elif event.key == pygame.K_BACKSPACE:
+                        name_input = name_input[:-1]
+                    elif event.unicode.isalpha() or event.unicode in (" ", "-", "'"):
+                        if len(name_input) < 20:
+                            name_input += event.unicode
                 elif show_feedback and state == "play" and event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     show_feedback = False
                     if questions_done >= ROUND_GOAL:
@@ -713,7 +803,10 @@ def main():
             elif state == "parent_panel":
                 for btn in parent_buttons:
                     action = btn.handle(event)
-                    if action == "parent_stats":
+                    if action == "parent_set_name":
+                        state = "parent_set_name"
+                        name_input = kid_name
+                    elif action == "parent_stats":
                         state = "parent_stats"
                     elif action == "parent_set_stats":
                         state = "parent_set_stats"
@@ -726,6 +819,15 @@ def main():
                         running = False
                     elif action == "parent_close":
                         close_parent_panel()
+
+            elif state == "parent_set_name":
+                for btn in name_buttons:
+                    action = btn.handle(event)
+                    if action == "name_save":
+                        save_kid_name()
+                    elif action == "name_back":
+                        state = "parent_panel"
+                        name_input = kid_name
 
             elif state == "parent_set_stats":
                 for btn in set_stats_buttons:
@@ -798,14 +900,18 @@ def main():
             screen.fill(ADMIN_BG)
             draw_rounded_rect(screen, pygame.Rect(100, 55, WIDTH - 200, 580), ADMIN_PANEL, 14, 2, ADMIN_BORDER)
             draw_text(screen, "PARENT CONTROL PANEL", font_title, ADMIN_ACCENT, WIDTH // 2, 100, center=True)
-            draw_text(screen, "Outside the math game — Owen only", font_med, TEXT_MUTED, WIDTH // 2, 140, center=True)
+            draw_text(screen, "Outside the math game — parents only", font_med, TEXT_MUTED, WIDTH // 2, 140, center=True)
+            if kid_name:
+                draw_text(screen, f"Kid's name: {kid_name}", font_med, GOOD, WIDTH // 2, 160, center=True)
+            else:
+                draw_text(screen, "Kid's name not set yet", font_med, BAD, WIDTH // 2, 160, center=True)
             if math_lock_active:
                 status = f"Math lock active — {questions_done}/{ROUND_GOAL} correct"
             else:
                 mins, secs = divmod(grace_remaining(), 60)
                 status = f"Grace period — math starts in {mins}:{secs:02d}"
-            draw_text(screen, status, font_med, ACCENT2, WIDTH // 2, 172, center=True)
-            draw_text(screen, f"Mastered facts: {len(mastered)}/{len(FACTS)}", font, TEXT_MUTED, WIDTH // 2, 192, center=True)
+            draw_text(screen, status, font_med, ACCENT2, WIDTH // 2, 182, center=True)
+            draw_text(screen, f"Mastered facts: {len(mastered)}/{len(FACTS)}", font, TEXT_MUTED, WIDTH // 2, 202, center=True)
             for btn in parent_buttons:
                 btn.draw(screen, font_med)
             if parent_notice and time.time() < parent_notice_until:
@@ -816,17 +922,30 @@ def main():
             screen.fill(ADMIN_BG)
             draw_rounded_rect(screen, pygame.Rect(120, 70, WIDTH - 240, 500), ADMIN_PANEL, 14, 2, ADMIN_BORDER)
             draw_text(screen, "SET STATS", font_title, ACCENT, WIDTH // 2, 120, center=True)
-            draw_text(screen, "Parent-only tools for Graham's progress", font_med, TEXT_MUTED, WIDTH // 2, 165, center=True)
-            draw_text(screen, "Graham cannot see or access this screen", font, BAD, WIDTH // 2, 195, center=True)
+            draw_text(screen, f"Parent-only tools for {kid_label(kid_name)}'s progress", font_med, TEXT_MUTED, WIDTH // 2, 165, center=True)
+            draw_text(screen, f"{kid_label(kid_name)} cannot see or access this screen", font, BAD, WIDTH // 2, 195, center=True)
             for btn in set_stats_buttons:
                 btn.draw(screen, font_med)
             if parent_notice and time.time() < parent_notice_until:
                 draw_text(screen, parent_notice, font_med, GOOD, WIDTH // 2, 470, center=True)
 
+        elif state == "parent_set_name":
+            screen.fill(ADMIN_BG)
+            draw_rounded_rect(screen, pygame.Rect(160, 90, WIDTH - 320, 420), ADMIN_PANEL, 14, 2, ADMIN_BORDER)
+            draw_text(screen, "SET KID'S NAME", font_title, GOOD, WIDTH // 2, 140, center=True)
+            draw_text(screen, "The math lock will say this name out loud in messages", font_med, TEXT_MUTED, WIDTH // 2, 185, center=True)
+            draw_rounded_rect(screen, pygame.Rect(220, 250, 520, 56), (20, 20, 28), 10, 2, GOOD)
+            draw_text(screen, name_input or "Type a name...", font_big, TEXT if name_input else TEXT_MUTED, WIDTH // 2, 278, center=True)
+            if name_message and time.time() < name_message_until:
+                draw_text(screen, name_message, font_med, ACCENT2, WIDTH // 2, 320, center=True)
+            for btn in name_buttons:
+                btn.draw(screen, font_med)
+            draw_text(screen, "Letters, spaces, and apostrophes only", font, TEXT_MUTED, WIDTH // 2, 500, center=True)
+
         elif state == "parent_stats":
             screen.fill(ADMIN_BG)
-            draw_text(screen, "Graham's Stats (Parent Only)", font_title, ADMIN_ACCENT, WIDTH // 2, 42, center=True)
-            draw_text(screen, "Full answers shown here only — not in Graham's game", font, TEXT_MUTED, WIDTH // 2, 78, center=True)
+            draw_text(screen, f"{kid_label(kid_name)}'s Stats (Parent Only)", font_title, ADMIN_ACCENT, WIDTH // 2, 42, center=True)
+            draw_text(screen, "Full answers shown here only — not in the kid's game", font, TEXT_MUTED, WIDTH // 2, 78, center=True)
             y = 110
             for fact in FACTS:
                 display = fact["display"]
@@ -856,13 +975,16 @@ def main():
             for i in range(40):
                 pygame.draw.circle(screen, (255, 255, 255), (random.randint(0, WIDTH), random.randint(0, HEIGHT)), 1)
             draw_rounded_rect(screen, pygame.Rect(220, 12, WIDTH - 440, 34), (48, 20, 28), 8, 2, BAD)
+            if lock_taunt and time.time() < lock_taunt_until:
+                draw_rounded_rect(screen, pygame.Rect(120, 8, WIDTH - 240, 40), (70, 20, 28), 8, 2, BAD)
+                draw_text(screen, lock_taunt, font_med, BAD, WIDTH // 2, 28, center=True)
             draw_text(
                 screen,
-                f"LOCKED — answer {ROUND_GOAL} correctly to escape  ({questions_done}/{ROUND_GOAL})",
+                f"{kid_label(kid_name).upper()}, answer {ROUND_GOAL} correctly to escape  ({questions_done}/{ROUND_GOAL})",
                 font_med,
                 BAD,
                 WIDTH // 2,
-                29,
+                58,
                 center=True,
             )
             draw_text(screen, f"Score: {score}", font_med, GOOD, 50, 62)
@@ -919,8 +1041,8 @@ def main():
 
         elif state == "results":
             screen.fill(BG)
-            draw_text(screen, "You Escaped!", font_title, GOOD, WIDTH // 2, 120, center=True)
-            draw_text(screen, "Nice work, Graham!", font_big, ACCENT, WIDTH // 2, 180, center=True)
+            draw_text(screen, f"You Escaped, {kid_label(kid_name)}!", font_title, GOOD, WIDTH // 2, 120, center=True)
+            draw_text(screen, f"Nice work, {kid_label(kid_name)}!", font_big, ACCENT, WIDTH // 2, 180, center=True)
             draw_rounded_rect(screen, pygame.Rect(280, 260, 400, 48), BUTTON, 10, 2, GOOD)
             draw_text(screen, "Press ESC to use your computer", font_med, TEXT, WIDTH // 2, 284, center=True)
 
