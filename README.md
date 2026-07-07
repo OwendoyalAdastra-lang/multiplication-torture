@@ -1,6 +1,6 @@
 # Graham's Multiplication Blast
 
-A way to force your kids to memorize multiplication facts — totally not made by kids 😉
+A way to force your kids to memorize multiplication facts — totally not made by kids 😉😉
 
 A Linux pygame app that quietly runs at login, waits 10 minutes, then fullscreen-locks the computer until your kid answers 10 multiplication problems correctly. Built for real whiteboard homework facts — with parent override, cheat-proofing, and progress tracking.
 
