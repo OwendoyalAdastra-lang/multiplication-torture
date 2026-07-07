@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Graham's Multiplication Blast
-A fun pygame game to memorize the exact times-table facts from Graham's whiteboard.
+Multiplication Torture
+A fun pygame game to memorize multiplication facts — whether they want to or not.
 
 Run:
     /home/owendoyaladastra/game-env/bin/python graham_multiplication_game.py
 
-Controls (Graham):
+Controls (kid):
     Click one of the 4 answer choices
     M = mute
     Answer 10 questions correctly to unlock and close the game
@@ -426,9 +426,9 @@ def build_parent_buttons(kid_name=""):
         Button((x, y0 + 1 * (h + gap), w, h), stats_label, "parent_stats", ADMIN_ACCENT),
         Button((x, y0 + 2 * (h + gap), w, h), "Set Stats", "parent_set_stats", ACCENT),
         Button((x, y0 + 3 * (h + gap), w, h), "Snooze Math (10 More Minutes)", "parent_snooze", ACCENT2),
-        Button((x, y0 + 4 * (h + gap), w, h), "Force Math Lock Now", "parent_force_lock", STREAK),
-        Button((x, y0 + 5 * (h + gap), w, h), "Close Math", "parent_close_math", danger=True),
-        Button((x, y0 + 6 * (h + gap), w, h), "Back to Math Lock", "parent_close", TEXT_MUTED),
+        Button((x, y0 + 4 * (h + gap), w, h), "Force Torture Now", "parent_force_lock", STREAK),
+        Button((x, y0 + 5 * (h + gap), w, h), "Close Torture", "parent_close_math", danger=True),
+        Button((x, y0 + 6 * (h + gap), w, h), "Back to Torture", "parent_close", TEXT_MUTED),
     ]
 
 
@@ -454,7 +454,7 @@ def main():
     pygame.init()
     pygame.mixer.init(frequency=SAMPLE_RATE, size=-16, channels=1, buffer=512)
     screen = pygame.display.set_mode((1, 1))
-    pygame.display.set_caption("Math Lock")
+    pygame.display.set_caption("Multiplication Torture")
     pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
 
@@ -535,9 +535,9 @@ def main():
     def update_window_title():
         who = kid_label(kid_name)
         if math_lock_active:
-            pygame.display.set_caption(f"{who}'s Math Lock — answer 10 to escape")
+            pygame.display.set_caption(f"Multiplication Torture — {who} needs 10 correct")
         else:
-            pygame.display.set_caption(f"{who}'s Math Lock")
+            pygame.display.set_caption("Multiplication Torture")
 
     update_window_title()
 

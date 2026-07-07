@@ -2,12 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP="${SCRIPT_DIR}/dist/GrahamsMultiplicationBlast"
+APP="${SCRIPT_DIR}/dist/MultiplicationTorture"
 ICON="${SCRIPT_DIR}/graham_math_icon.png"
 AUTOSTART_DIR="${HOME}/.config/autostart"
 APPS_DIR="${HOME}/.local/share/applications"
-AUTOSTART_FILE="${AUTOSTART_DIR}/graham-multiplication-blast.desktop"
-LAUNCHER_FILE="${APPS_DIR}/GrahamsMultiplicationBlast.desktop"
+AUTOSTART_FILE="${AUTOSTART_DIR}/multiplication-torture.desktop"
+LAUNCHER_FILE="${APPS_DIR}/MultiplicationTorture.desktop"
 
 if [[ ! -x "${APP}" ]]; then
   echo "App not found at ${APP}"
@@ -22,8 +22,8 @@ cat > "${AUTOSTART_FILE}" <<EOF
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Graham's Math Lock
-Comment=Starts Graham's multiplication lock screen at login
+Name=Multiplication Torture
+Comment=Starts Multiplication Torture at login
 Exec=/bin/bash -c 'sleep 3 && exec ${APP}'
 Icon=${ICON}
 Terminal=false
@@ -37,8 +37,8 @@ cat > "${LAUNCHER_FILE}" <<EOF
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Graham's Multiplication Blast
-Comment=Practice Graham's whiteboard multiplication facts
+Name=Multiplication Torture
+Comment=A way to force your kids to memorize multiplication facts
 Exec=${APP}
 Icon=${ICON}
 Terminal=false
@@ -51,9 +51,9 @@ echo "Installed startup app:"
 echo "  ${AUTOSTART_FILE}"
 echo "  ${LAUNCHER_FILE}"
 echo
-echo "Graham's math lock runs hidden at login."
-echo "After 10 free minutes, math fullscreen locks in."
-echo "He must answer 10 questions correctly to escape."
+echo "Multiplication Torture runs hidden at login."
+echo "After 10 free minutes, fullscreen torture begins."
+echo "10 correct answers required to escape."
 echo "Parent override: Ctrl+Shift+P, PIN is in graham_multiplication_game.py (PARENT_PIN)."
 echo
 echo "To remove autostart later, run:"

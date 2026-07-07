@@ -1,9 +1,9 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Graham's Math Lock
-Comment=Starts Graham's multiplication lock screen at login
-Exec=/bin/bash -c 'sleep 3 && exec /home/owendoyaladastra/dist/GrahamsMultiplicationBlast'
+Name=Multiplication Torture
+Comment=Starts Multiplication Torture at login
+Exec=/bin/bash -c 'sleep 3 && exec /home/owendoyaladastra/dist/MultiplicationTorture'
 Icon=/home/owendoyaladastra/graham_math_icon.png
 Terminal=false
 Categories=Education;

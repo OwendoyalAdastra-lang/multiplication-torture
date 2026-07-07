@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Build Graham's Multiplication Blast as a standalone desktop app.
+Build Multiplication Torture as a standalone desktop app.
 
 Usage:
     /home/owendoyaladastra/game-env/bin/python build_graham_math_app.py
 
 Output:
-    dist/GrahamsMultiplicationBlast
+    dist/MultiplicationTorture
 """
 
 import os
@@ -15,7 +15,7 @@ import sys
 
 import PyInstaller.__main__
 
-APP_NAME = "GrahamsMultiplicationBlast"
+APP_NAME = "MultiplicationTorture"
 APP_VERSION = "1.0.0"
 MAIN_SCRIPT = "graham_multiplication_game.py"
 ICON_FILE = "graham_math_icon.png"

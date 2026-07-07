@@ -1,4 +1,4 @@
-# Graham's Multiplication Blast
+# Multiplication Torture
 
 A way to force your kids to memorize multiplication facts — totally not made by kids 😉😉
 
@@ -37,7 +37,7 @@ A Linux pygame app built for real whiteboard homework facts — with parent over
 - **10 correct answers to escape** — wrong answers don't count
 - **Cheat-proof** — no answer leaks, one try per question, encoded answers
 - **Parent panel** — `Ctrl+Shift+P` + PIN (default `2847`, change in code)
-  - View stats, set/reset progress, snooze math, force lock, close math (red button)
+  - View stats, set kid's name, set/reset progress, snooze torture, force lock, close torture (red button)
 
 ## Quick start
 

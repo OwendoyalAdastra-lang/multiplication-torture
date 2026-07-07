@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP="${SCRIPT_DIR}/dist/GrahamsMultiplicationBlast"
+APP="${SCRIPT_DIR}/dist/MultiplicationTorture"
 GAME="${SCRIPT_DIR}/graham_multiplication_game.py"
 
 if [[ -x "$APP" ]]; then

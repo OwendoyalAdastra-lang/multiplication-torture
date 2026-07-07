@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Graham's Multiplication Blast
-Comment=Practice Graham's whiteboard multiplication facts
-Exec=/home/owendoyaladastra/dist/GrahamsMultiplicationBlast
-Icon=/home/owendoyaladastra/graham_math_icon.png
-Terminal=false
-Categories=Game;Education;

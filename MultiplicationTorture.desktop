@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Multiplication Torture
+Comment=A way to force your kids to memorize multiplication facts
+Exec=/home/owendoyaladastra/dist/MultiplicationTorture
+Icon=/home/owendoyaladastra/graham_math_icon.png
+Terminal=false
+Categories=Game;Education;

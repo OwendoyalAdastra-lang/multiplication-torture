@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a simple app icon for Graham's multiplication game."""
+"""Create a simple app icon for Multiplication Torture."""
 
 import os
 import sys
@@ -20,7 +20,7 @@ pygame.draw.circle(surface, (95, 235, 150, 255), (SIZE - 70, 70), 22)
 font_big = pygame.font.SysFont("DejaVu Sans", 72, bold=True)
 font_small = pygame.font.SysFont("DejaVu Sans", 34, bold=True)
 surface.blit(font_big.render("8×6", True, (255, 230, 90, 255)), font_big.render("8×6", True, (255, 230, 90, 255)).get_rect(center=(SIZE // 2, 118)))
-surface.blit(font_small.render("Graham", True, (245, 248, 255, 255)), font_small.render("Graham", True, (245, 248, 255, 255)).get_rect(center=(SIZE // 2, 188)))
+surface.blit(font_small.render("Torture", True, (245, 248, 255, 255)), font_small.render("Torture", True, (245, 248, 255, 255)).get_rect(center=(SIZE // 2, 188)))
 
 pygame.image.save(surface, OUT)
 pygame.quit()
