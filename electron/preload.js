@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld("tortureAPI", {
   parentBackToLock: () => ipcRenderer.invoke("parent-back-to-lock"),
   onLockState: (cb) => ipcRenderer.on("lock-state", (_e, data) => cb(data)),
   onOpenParentPin: (cb) => ipcRenderer.on("open-parent-pin", () => cb()),
+  reportFocusLost: () => ipcRenderer.invoke("focus-lost"),
 });

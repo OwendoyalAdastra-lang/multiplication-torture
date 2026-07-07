@@ -530,6 +530,20 @@ async function init() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.escaped) window.tortureAPI.parentQuit();
   });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && !state.escaped) window.tortureAPI.reportFocusLost();
+  });
+  window.addEventListener("blur", () => {
+    if (!state.escaped) window.tortureAPI.reportFocusLost();
+  });
+
+  // Keep mouse from resting on the bottom shelf trigger zone
+  setInterval(() => {
+    if (!state.escaped && state.view === "play") {
+      document.body.style.cursor = "default";
+    }
+  }, 2000);
 }
 
 init();

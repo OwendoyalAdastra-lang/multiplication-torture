@@ -1,12 +1,31 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
+html, body {
   font-family: "DejaVu Sans", "Segoe UI", system-ui, sans-serif;
   background: #0c1024;
   color: #f5f8ff;
+  width: 100vw;
+  height: 100vh;
   min-height: 100vh;
   overflow: hidden;
   user-select: none;
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Block the bottom edge where ChromeOS shelf pops up */
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72px;
+  background: #0c1024;
+  z-index: 9998;
+  pointer-events: auto;
 }
 
 #app {

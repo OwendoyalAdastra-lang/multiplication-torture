@@ -11,6 +11,7 @@ let mainWindow = null;
 let locked = false;
 let escaped = false;
 let graceTimer = null;
+let focusInterval = null;
 
 app.commandLine.appendSwitch("disable-gpu");
 app.commandLine.appendSwitch("disable-software-rasterizer");
@@ -32,6 +33,31 @@ function loadProgressFile() {
 function saveProgressFile(data) {
   fs.mkdirSync(PROGRESS_DIR, { recursive: true });
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
+}
+
+function enforceLock() {
+  if (!mainWindow || !locked || escaped) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.setFullScreen(true);
+  mainWindow.setKiosk(true);
+  mainWindow.setAlwaysOnTop(true, "screen-saver");
+  mainWindow.moveTop();
+  mainWindow.focus();
+  mainWindow.webContents.focus();
+}
+
+function startFocusGuard() {
+  if (focusInterval) clearInterval(focusInterval);
+  focusInterval = setInterval(enforceLock, 400);
+}
+
+function stopFocusGuard() {
+  if (focusInterval) {
+    clearInterval(focusInterval);
+    focusInterval = null;
+  }
+  if (mainWindow) mainWindow.setAlwaysOnTop(false);
 }
 
 function createWindow(openPin = false) {
@@ -57,6 +83,10 @@ function createWindow(openPin = false) {
     fullscreen: true,
     kiosk: true,
     autoHideMenuBar: true,
+    minimizable: false,
+    maximizable: false,
+    resizable: false,
+    skipTaskbar: true,
     backgroundColor: "#0c1024",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -72,8 +102,10 @@ function createWindow(openPin = false) {
   mainWindow.once("ready-to-show", () => {
     mainWindow.setFullScreen(true);
     mainWindow.setKiosk(true);
+    mainWindow.setAlwaysOnTop(true, "screen-saver");
     mainWindow.show();
-    mainWindow.focus();
+    enforceLock();
+    startFocusGuard();
   });
 
   mainWindow.loadFile(path.join(__dirname, "..", "app", "index.html"));
@@ -81,11 +113,22 @@ function createWindow(openPin = false) {
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send("lock-state", { locked: true, escaped: false });
     if (openPin) mainWindow.webContents.send("open-parent-pin");
+    enforceLock();
   });
 
+  mainWindow.on("blur", () => {
+    if (locked && !escaped) setTimeout(enforceLock, 50);
+  });
+  mainWindow.on("hide", () => {
+    if (locked && !escaped) setTimeout(enforceLock, 50);
+  });
+  mainWindow.on("minimize", () => {
+    if (locked && !escaped) setTimeout(enforceLock, 50);
+  });
   mainWindow.on("close", (event) => {
     if (locked && !escaped) {
       event.preventDefault();
+      enforceLock();
       mainWindow.webContents.send("lock-state", { blocked: true });
     }
   });
@@ -116,13 +159,19 @@ app.whenReady().then(() => {
   ipcMain.handle("escaped", () => {
     escaped = true;
     locked = false;
+    stopFocusGuard();
     if (mainWindow) mainWindow.setKiosk(false);
     return true;
   });
   ipcMain.handle("parent-quit", () => {
     escaped = true;
     locked = false;
+    stopFocusGuard();
     app.quit();
+  });
+  ipcMain.handle("focus-lost", () => {
+    enforceLock();
+    return true;
   });
   ipcMain.handle("parent-back-to-lock", () => {
     if (!mainWindow) createWindow(false);
@@ -138,6 +187,7 @@ app.whenReady().then(() => {
   ipcMain.handle("parent-snooze", () => {
     escaped = true;
     locked = false;
+    stopFocusGuard();
     if (mainWindow) {
       mainWindow.destroy();
       mainWindow = null;
@@ -153,6 +203,7 @@ app.on("window-all-closed", () => {
 
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
+  stopFocusGuard();
   if (graceTimer) clearTimeout(graceTimer);
 });
 

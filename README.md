@@ -76,6 +76,10 @@ python3 build_graham_math_app.py
 ./install_graham_startup.sh
 ```
 
+## ChromeOS / shelf toolbar note
+
+If Graham can still reach the bottom toolbar, the app will **yank focus back** every fraction of a second while locked. For maximum lockdown on a Chromebook, also set the shelf to **Always hide** in ChromeOS settings.
+
 ## Remove autostart
 
 ```bash
