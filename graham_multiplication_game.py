@@ -36,6 +36,7 @@ except ImportError:
 
 WIDTH, HEIGHT = 960, 700
 FPS = 60
+HIDDEN_WINDOW_POS = "-32000,-32000"
 PROGRESS_DIR = os.path.join(os.path.expanduser("~"), ".graham_multiplication")
 PROGRESS_FILE = os.path.join(PROGRESS_DIR, "progress.json")
 
@@ -432,6 +433,30 @@ def build_parent_buttons(kid_name=""):
     ]
 
 
+def setup_hidden_grace_screen():
+    """Keep the app alive during grace without showing a visible window."""
+    os.environ["SDL_VIDEO_WINDOW_POS"] = HIDDEN_WINDOW_POS
+    return pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
+
+
+def setup_fullscreen_lock():
+    """Fullscreen math lock — reinit display to avoid broken 1x1 scaling."""
+    os.environ.pop("SDL_VIDEO_WINDOW_POS", None)
+    pygame.display.quit()
+    pygame.display.init()
+    for flags in (pygame.FULLSCREEN | pygame.SCALED, pygame.FULLSCREEN, (0,)):
+        try:
+            return pygame.display.set_mode((WIDTH, HEIGHT), flags)
+        except pygame.error:
+            continue
+    return pygame.display.set_mode((WIDTH, HEIGHT))
+
+
+def setup_windowed():
+    os.environ["SDL_VIDEO_WINDOW_POS"] = "center"
+    return pygame.display.set_mode((WIDTH, HEIGHT))
+
+
 def build_name_buttons():
     return [
         Button((330, 360, 300, 52), "Save Name", "name_save", GOOD),
@@ -453,7 +478,7 @@ def build_set_stats_buttons():
 def main():
     pygame.init()
     pygame.mixer.init(frequency=SAMPLE_RATE, size=-16, channels=1, buffer=512)
-    screen = pygame.display.set_mode((1, 1))
+    screen = setup_hidden_grace_screen()
     pygame.display.set_caption("Multiplication Torture")
     pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
@@ -543,7 +568,7 @@ def main():
 
     def activate_math_lock():
         nonlocal state, screen, math_lock_active, return_state, lock_taunt, lock_taunt_until
-        screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
+        screen = setup_fullscreen_lock()
         update_window_title()
         pygame.event.set_grab(True)
         pygame.mouse.set_visible(True)
@@ -561,7 +586,7 @@ def main():
         state = "pin_entry"
         pin_input = ""
         pin_message = ""
-        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        screen = setup_windowed()
         pygame.mouse.set_visible(True)
 
     def close_pin_entry():
@@ -569,17 +594,17 @@ def main():
         state = return_state
         pin_input = ""
         if state == "grace" and not math_lock_active:
-            screen = pygame.display.set_mode((1, 1))
+            screen = setup_hidden_grace_screen()
             pygame.mouse.set_visible(False)
         elif state == "play":
-            screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
+            screen = setup_fullscreen_lock()
             pygame.mouse.set_visible(True)
 
     def submit_pin():
         nonlocal state, pin_input, pin_message, pin_message_until, parent_view, screen, name_input
         if pin_input == PARENT_PIN:
             play_sound("good")
-            screen = pygame.display.set_mode((WIDTH, HEIGHT))
+            screen = setup_windowed()
             pygame.mouse.set_visible(True)
             pin_input = ""
             pin_message = ""
@@ -603,17 +628,17 @@ def main():
         parent_view = "main"
         if math_lock_active and not escape_unlocked:
             state = "play"
-            screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
+            screen = setup_fullscreen_lock()
             pygame.event.set_grab(True)
             pygame.mouse.set_visible(True)
         elif escape_unlocked:
             state = "results"
-            screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
+            screen = setup_fullscreen_lock()
             pygame.event.set_grab(False)
             pygame.mouse.set_visible(True)
         else:
             state = "grace"
-            screen = pygame.display.set_mode((1, 1))
+            screen = setup_hidden_grace_screen()
             pygame.mouse.set_visible(False)
 
     def show_parent_notice(message):
@@ -627,7 +652,7 @@ def main():
         math_lock_active = False
         escape_unlocked = False
         state = "grace"
-        screen = pygame.display.set_mode((1, 1))
+        screen = setup_hidden_grace_screen()
         pygame.event.set_grab(False)
         pygame.mouse.set_visible(False)
         show_parent_notice("Math snoozed for 10 more minutes.")
@@ -653,7 +678,7 @@ def main():
         nonlocal escape_unlocked, state, screen
         escape_unlocked = True
         state = "results"
-        screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.FULLSCREEN)
+        screen = setup_fullscreen_lock()
         pygame.event.set_grab(False)
         pygame.mouse.set_visible(True)
         show_parent_notice(f"{kid_label(kid_name)} can close the math lock now.")
@@ -918,10 +943,7 @@ def main():
             if p["life"] > 0
         ]
 
-        if state == "grace":
-            screen.fill((0, 0, 0))
-
-        elif state == "pin_entry":
+        if state == "pin_entry":
             screen.fill(ADMIN_BG)
             draw_rounded_rect(screen, pygame.Rect(180, 80, WIDTH - 360, 520), ADMIN_PANEL, 14, 2, ADMIN_BORDER)
             draw_text(screen, "PARENT PIN", font_title, ADMIN_ACCENT, WIDTH // 2, 130, center=True)
@@ -1092,7 +1114,10 @@ def main():
             draw_rounded_rect(screen, pygame.Rect(280, 260, 400, 48), BUTTON, 10, 2, GOOD)
             draw_text(screen, "Press ESC to use your computer", font_med, TEXT, WIDTH // 2, 284, center=True)
 
-        pygame.display.flip()
+        if state == "grace":
+            pygame.event.pump()
+        else:
+            pygame.display.flip()
 
     pygame.quit()
     sys.exit()
