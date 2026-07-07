@@ -39,20 +39,25 @@ A Linux pygame app built for real whiteboard homework facts — with parent over
 - **Parent panel** — `Ctrl+Shift+P` + PIN (default `2847`, change in code)
   - View stats, set kid's name, set/reset progress, snooze torture, force lock, close torture (red button)
 
-## Quick start
+## Quick start (Electron — recommended, no Python needed)
 
 ```bash
-# Python 3 + pygame + pyinstaller
-pip install pygame pyinstaller numpy
-
-# Run directly
-python3 graham_multiplication_game.py
-
-# Build standalone app
-python3 build_graham_math_app.py
+cd multiplication-torture   # or graham-multiplication-blast clone folder
+chmod +x launch-torture.sh install_graham_startup.sh
+./launch-torture.sh         # installs npm deps on first run, then launches
 
 # Install as login startup app (Linux)
 ./install_graham_startup.sh
+```
+
+Uses **Electron** (Chromium) instead of Python/pygame — fixes display glitches like the white-line bug.
+
+### Legacy Python version
+
+```bash
+pip install pygame pyinstaller numpy
+python3 graham_multiplication_game.py
+python3 build_graham_math_app.py
 ```
 
 ## Set your kid's name
@@ -64,7 +69,7 @@ Saved in `~/.graham_multiplication/progress.json` as `kid_name`.
 
 ## Parent PIN
 
-Edit `PARENT_PIN` near the top of `graham_multiplication_game.py`, then rebuild:
+Edit `PARENT_PIN` in `app/app.js` (Electron) or `graham_multiplication_game.py` (Python legacy), then restart:
 
 ```bash
 python3 build_graham_math_app.py

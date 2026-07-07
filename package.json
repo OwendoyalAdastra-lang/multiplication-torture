@@ -1,0 +1,27 @@
+{
+  "name": "multiplication-torture",
+  "version": "1.0.0",
+  "description": "a way to force your kids to memorize multiplication facts — totally not made by kids 😉😉",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --linux AppImage"
+  },
+  "author": "OwendoyalAdastra-lang",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.multiplication.torture",
+    "productName": "Multiplication Torture",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Education"
+    }
+  }
+}
