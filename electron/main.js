@@ -13,9 +13,7 @@ let escaped = false;
 let graceTimer = null;
 let focusInterval = null;
 
-app.commandLine.appendSwitch("disable-gpu");
-app.commandLine.appendSwitch("disable-software-rasterizer");
-app.commandLine.appendSwitch("disable-gpu-compositing");
+// Do NOT disable software rasterizer with GPU off — that causes a black screen.
 
 function loadProgressFile() {
   try {
@@ -49,7 +47,7 @@ function enforceLock() {
 
 function startFocusGuard() {
   if (focusInterval) clearInterval(focusInterval);
-  focusInterval = setInterval(enforceLock, 400);
+  focusInterval = setInterval(enforceLock, 1200);
 }
 
 function stopFocusGuard() {
@@ -111,9 +109,18 @@ function createWindow(openPin = false) {
   mainWindow.loadFile(path.join(__dirname, "..", "app", "index.html"));
 
   mainWindow.webContents.on("did-finish-load", () => {
+    if (!mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.setFullScreen(true);
+      mainWindow.setKiosk(true);
+    }
     mainWindow.webContents.send("lock-state", { locked: true, escaped: false });
     if (openPin) mainWindow.webContents.send("open-parent-pin");
     enforceLock();
+  });
+
+  mainWindow.webContents.on("did-fail-load", (_e, code, desc) => {
+    console.error("Failed to load:", code, desc);
   });
 
   mainWindow.on("blur", () => {
@@ -181,6 +188,7 @@ app.whenReady().then(() => {
     if (mainWindow) {
       mainWindow.setKiosk(true);
       mainWindow.setFullScreen(true);
+      startFocusGuard();
     }
     return true;
   });

@@ -510,8 +510,18 @@ function showBlockedToast(msg) {
 }
 
 async function init() {
-  await loadAll();
-  startPlay();
+  try {
+    if (!window.tortureAPI) throw new Error("tortureAPI missing — run via Electron");
+    await loadAll();
+    startPlay();
+    const loading = document.getElementById("loading");
+    if (loading) loading.style.display = "none";
+  } catch (err) {
+    const loading = document.getElementById("loading");
+    if (loading) loading.textContent = `Error: ${err.message}`;
+    console.error(err);
+    return;
+  }
 
   window.tortureAPI.onLockState((data) => {
     if (data.blocked) {

@@ -10,4 +10,4 @@ if [[ ! -d node_modules/electron ]]; then
 fi
 
 # Add --now to skip the 10-minute grace period (for testing)
-exec npx electron . --no-sandbox --disable-gpu --disable-gpu-compositing "$@"
+exec npx electron . --no-sandbox "$@"
